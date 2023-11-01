@@ -29,22 +29,27 @@ void setup() {
     leftStrip.clear();
     rightStrip.begin();
     rightStrip.clear();
-    for (int i = 0; i < TOTAL_LED_COUNT; ++i) {
-        dots[i].offSetRed = 2;
-        dots[i].offSetGreen = 2;
-        dots[i].offSetBlue = 1;
-    }
+    setColor(1, 1, 2);
     pinMode(WRENCH_SWITCH, INPUT_PULLUP);
 }
 
 
 void loop() {
-    if (buttonReadLow(WRENCH_SWITCH) == true) {
-        turnOn();
+    if (Serial.available() > 0) {
+        String rawData = Serial.readStringUntil('\n');
+        uint8_t data = atoi(rawData.c_str());
+        if (data != 0 || rawData.startsWith("0")) {
+            Serial.println(data);
+        } else {
+            Serial.println("ERROR: didn't get a number...  Try again.");
+        }
     } else {
-        turnOff();
+        if (buttonReadLow(WRENCH_SWITCH) == true) {
+            turnOn();
+        } else {
+            turnOff();
+        }
     }
-
 }
 
 void paintDot(Dot dot, uint8_t index) {
@@ -106,4 +111,12 @@ void turnOff(void) {
         mainBrightness  = 0;
     }
     wasOn = false;
+}
+
+void setColor(uint8_t offSetRed, uint8_t offSetGreen, uint8_t offSetBlue) {
+    for (int i = 0; i < TOTAL_LED_COUNT; ++i) {
+        dots[i].offSetRed = offSetRed;
+        dots[i].offSetGreen = offSetGreen;
+        dots[i].offSetBlue = offSetBlue;
+    }
 }
