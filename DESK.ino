@@ -31,7 +31,7 @@ void setup() {
     leftStrip.clear();
     rightStrip.begin();
     rightStrip.clear();
-    setColor(255, 255, 255);
+    setColor(255, 255, 100);
     pinMode(WRENCH_SWITCH, INPUT_PULLUP);
 }
 
@@ -121,8 +121,11 @@ void setColor(uint8_t offSetRed, uint8_t offSetGreen, uint8_t offSetBlue) {
 
 void processSerialData(void) {
         String rawData = Serial.readStringUntil('\n');
+        rawData.trim();
+        Serial.print(rawData);
         uint8_t offSetRed, offSetGreen, offSetBlue;
         if (sscanf(rawData.c_str(), "%d,%d,%d", &offSetRed, &offSetGreen, &offSetBlue) == 3) {
+            Serial.println(offSetRed);
             setColor(offSetRed, offSetGreen, offSetBlue);
             showStrips();
         } else {
