@@ -29,9 +29,9 @@ void setup() {
     rightStrip.begin();
     rightStrip.clear();
     for (int i = 0; i < TOTAL_LED_COUNT; ++i) {
-        dots[i].offSetRed = 1;
-        dots[i].offSetGreen = 1;
-        dots[i].offSetBlue = 2;
+        dots[i].offSetRed = 4;
+        dots[i].offSetGreen = 4;
+        dots[i].offSetBlue = 1;
     }
     pinMode(WRENCH_SWITCH, INPUT_PULLUP);
 }
