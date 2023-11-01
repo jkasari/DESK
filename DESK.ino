@@ -11,6 +11,7 @@
 Adafruit_NeoPixel leftStrip = Adafruit_NeoPixel(LEFT_LED_COUNT, LEFT_STRAND_PIN, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel rightStrip = Adafruit_NeoPixel(RIGHT_LED_COUNT, RIGHT_STRAND_PIN, NEO_GRB + NEO_KHZ800);
 uint32_t mainBrightness = 0;
+uint8_t shutDownDelaySec = 1;
 int8_t inc = 0;
 bool wasOn = false;
 
@@ -23,26 +24,20 @@ struct Dot{
 
 Dot dots[TOTAL_LED_COUNT];
 
+//=============================================================================================================================
 void setup() {
     Serial.begin(115200);
     leftStrip.begin();
     leftStrip.clear();
     rightStrip.begin();
     rightStrip.clear();
-    setColor(1, 1, 2);
+    setColor(255, 255, 255);
     pinMode(WRENCH_SWITCH, INPUT_PULLUP);
 }
 
-
 void loop() {
     if (Serial.available() > 0) {
-        String rawData = Serial.readStringUntil('\n');
-        uint8_t data = atoi(rawData.c_str());
-        if (data != 0 || rawData.startsWith("0")) {
-            Serial.println(data);
-        } else {
-            Serial.println("ERROR: didn't get a number...  Try again.");
-        }
+        processSerialData();
     } else {
         if (buttonReadLow(WRENCH_SWITCH) == true) {
             turnOn();
@@ -51,13 +46,14 @@ void loop() {
         }
     }
 }
+//=============================================================================================================================
 
 void paintDot(Dot dot, uint8_t index) {
     if (index <= RIGHT_LED_COUNT + LEFT_LED_COUNT) {
         if (index > RIGHT_LED_COUNT) {
-            leftStrip.setPixelColor(index-RIGHT_LED_COUNT, dot.brightness/dot.offSetRed, dot.brightness/dot.offSetGreen, dot.brightness/dot.offSetBlue);
+            leftStrip.setPixelColor(index-RIGHT_LED_COUNT, dot.brightness*dot.offSetRed/255, dot.brightness*dot.offSetGreen/255, dot.brightness*dot.offSetBlue/255);
         } else {
-            rightStrip.setPixelColor(RIGHT_LED_COUNT - index, dot.brightness/dot.offSetRed, dot.brightness/dot.offSetGreen, dot.brightness/dot.offSetBlue);
+            rightStrip.setPixelColor(RIGHT_LED_COUNT - index, dot.brightness*dot.offSetRed/255, dot.brightness*dot.offSetGreen/255, dot.brightness*dot.offSetBlue/255);
         }
     }
 }
@@ -100,6 +96,7 @@ void turnOn(void) {
 
 void turnOff(void) {
     if (wasOn) {
+        delay(shutDownDelaySec*1000);
         for (int i = 255; i >= 0; --i) {
             for (int j = 0; j < TOTAL_LED_COUNT; ++j) {
                 dots[j].brightness = i;
@@ -118,5 +115,17 @@ void setColor(uint8_t offSetRed, uint8_t offSetGreen, uint8_t offSetBlue) {
         dots[i].offSetRed = offSetRed;
         dots[i].offSetGreen = offSetGreen;
         dots[i].offSetBlue = offSetBlue;
+        paintDot(dots[i], i);
     }
+}
+
+void processSerialData(void) {
+        String rawData = Serial.readStringUntil('\n');
+        uint8_t offSetRed, offSetGreen, offSetBlue;
+        if (sscanf(rawData.c_str(), "%d,%d,%d", &offSetRed, &offSetGreen, &offSetBlue) == 3) {
+            setColor(offSetRed, offSetGreen, offSetBlue);
+            showStrips();
+        } else {
+            Serial.println("ERROR: didn't get a number...  Try again.");
+        }
 }
